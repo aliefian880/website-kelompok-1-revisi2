@@ -1,0 +1,40 @@
+# Base image PHP + Apache
+FROM php:8.2-apache
+
+# ---- Install Dependencies ----
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- Install Node.js ----
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Cek versi Node & npm
+RUN node -v
+RUN npm -v
+
+# ---- Enable Apache Rewrite for PHP ----
+RUN a2enmod rewrite
+COPY ./apache-config.conf /etc/apache2/sites-available/000-default.conf
+
+# ---- Copy Project Files to Apache Directory ----
+WORKDIR /var/www/html
+COPY . /var/www/html/
+
+# ---- Install Node Dependencies (Jika Ada package.json) ----
+RUN if [ -f package.json ]; then npm install; fi
+
+# ---- Build Frontend (Jika Ada Script Build) ----
+RUN if [ -f package.json ]; then npm run build || echo "Tidak ada build"; fi
+
+# ---- Permission agar folder bisa diakses ----
+RUN chown -R www-data:www-data /var/www/html
+
+# ---- Expose Port Apache ----
+EXPOSE 80
+
+# ---- Start Apache ----
+CMD ["apache2-foreground"]
