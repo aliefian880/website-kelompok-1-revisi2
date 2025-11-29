@@ -1,0 +1,31 @@
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "3.0.2"
+    }
+  }
+}
+
+provider "docker" {}
+
+resource "docker_image" "website" {
+  name = "website-kelompok1:v1"
+
+  build {
+    context    = "C:/Users/NamaAnda/website-kelompok-1-revisi2"
+    dockerfile = "Dockerfile"
+  }
+}
+
+resource "docker_container" "website_container" {
+  name  = "container-terraform-website"
+  image = docker_image.website.latest
+
+  restart = "always"
+
+  ports {
+    internal = 80
+    external = 8082
+  }
+}
